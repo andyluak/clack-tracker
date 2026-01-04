@@ -29,8 +29,17 @@ struct Clack_TrackerApp: App {
         } label: {
             // This appears in the menu bar
             // monitor.todayCount updates automatically when keys are pressed!
-            Text("⌨️ \(monitor.todayCount)")
+            Text("⌨️ \(formatCompact(monitor.todayCount))")
         }
         .menuBarExtraStyle(.window) // Use window style - fixes greyed out text
+    }
+
+    private func formatCompact(_ number: Int) -> String {
+        if number >= 1_000_000 {
+            return String(format: "%.1fM", Double(number) / 1_000_000)
+        } else if number >= 1_000 {
+            return String(format: "%.1fk", Double(number) / 1_000)
+        }
+        return "\(number)"
     }
 }

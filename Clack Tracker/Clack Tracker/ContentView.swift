@@ -41,10 +41,17 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 16) {
                 // Today's count (big and prominent)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("TODAY")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.gray)
-                        .tracking(0.5)
+                    HStack(spacing: 6) {
+                        Text("TODAY")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.gray)
+                            .tracking(0.5)
+                        if let trend = monitor.trendPercentage {
+                            Text(trendText(trend))
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(trend >= 0 ? .green : .orange)
+                        }
+                    }
                     Text("\(formatNumber(monitor.todayCount))")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
@@ -154,15 +161,37 @@ struct ContentView: View {
             return "Yesterday"
         }
 
+        let daysAgo = calendar.dateComponents([.day], from: date, to: Date()).day ?? 0
+        if daysAgo <= 6 {
+            return "\(daysAgo) days ago"
+        }
+
         let displayFormatter = DateFormatter()
         displayFormatter.dateFormat = "MMM d"
         return displayFormatter.string(from: date)
     }
 
     private func formatNumber(_ number: Int) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
+        if number >= 1_000_000 {
+            let millions = Double(number) / 1_000_000
+            return String(format: "%.1fM", millions)
+        } else if number >= 10_000 {
+            let thousands = Double(number) / 1_000
+            return String(format: "%.1fk", thousands)
+        } else if number >= 1_000 {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
+        }
+        return "\(number)"
+    }
+
+    private func trendText(_ percentage: Int) -> String {
+        if percentage >= 0 {
+            return "↑\(percentage)%"
+        } else {
+            return "↓\(abs(percentage))%"
+        }
     }
 }
 

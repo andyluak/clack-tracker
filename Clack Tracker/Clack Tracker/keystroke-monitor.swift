@@ -205,6 +205,17 @@ class KeystrokeMonitor: ObservableObject {
         history.values.reduce(0, +) + todayCount
     }
 
+    var yesterdayCount: Int {
+        let yesterday = dateString(from: Date(timeIntervalSinceNow: -86400))
+        return history[yesterday] ?? 0
+    }
+
+    var trendPercentage: Int? {
+        guard yesterdayCount > 0 else { return nil }
+        let diff = todayCount - yesterdayCount
+        return Int((Double(diff) / Double(yesterdayCount)) * 100)
+    }
+
     var last7Days: [(date: String, count: Int)] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
