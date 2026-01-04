@@ -14,10 +14,12 @@ class KeystrokeMonitor: ObservableObject {
     // @Published means: when this changes, SwiftUI views will update
     @Published var todayCount: Int = 0
     @Published var history: [String: Int] = [:] // Date string -> count
+    @Published var hasAccessibilityPermission: Bool = false
 
     // This holds our event listener (we'll need it to stop listening later)
     private var eventTap: CFMachPort?
     private var midnightTimer: Timer?
+    private var permissionCheckTimer: Timer?
 
     init() {
         // Load saved count when app starts (in case app was closed during the day)
@@ -34,9 +36,15 @@ class KeystrokeMonitor: ObservableObject {
         // Start midnight timer
         startMidnightTimer()
 
+        // Request accessibility permission immediately (this adds app to list)
+        let trusted = AXIsProcessTrusted()
+        hasAccessibilityPermission = trusted
+        if !trusted {
+            requestAccessibilityPermission()
+        }
+
         // Start monitoring automatically
-        // Delay slightly to ensure everything is initialized
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.startMonitoring()
         }
     }
@@ -45,9 +53,12 @@ class KeystrokeMonitor: ObservableObject {
     func startMonitoring() {
         // Check if we have permission first
         let trusted = AXIsProcessTrusted()
+        hasAccessibilityPermission = trusted
+
         if !trusted {
             print("❌ No Accessibility permission - can't monitor keystrokes")
             requestAccessibilityPermission()
+            startPermissionCheckTimer()
             return
         }
 
@@ -115,6 +126,28 @@ class KeystrokeMonitor: ObservableObject {
             eventTap = nil
         }
         midnightTimer?.invalidate()
+        permissionCheckTimer?.invalidate()
+    }
+
+    // Periodically check if user granted permission
+    private func startPermissionCheckTimer() {
+        permissionCheckTimer?.invalidate()
+        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            DispatchQueue.main.async {
+                if AXIsProcessTrusted() {
+                    self?.permissionCheckTimer?.invalidate()
+                    self?.permissionCheckTimer = nil
+                    self?.startMonitoring()
+                }
+            }
+        }
+    }
+
+    // Open System Settings to Accessibility
+    func openAccessibilitySettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     // MARK: - Midnight Reset

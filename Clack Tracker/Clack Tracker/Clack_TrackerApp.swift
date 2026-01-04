@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Sparkle
 
 @main
 struct Clack_TrackerApp: App {
@@ -13,6 +14,13 @@ struct Clack_TrackerApp: App {
     // It lives as long as the app lives
     // Monitoring starts automatically in KeystrokeMonitor's init()
     @StateObject private var monitor = KeystrokeMonitor()
+
+    // Sparkle updater controller
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
 
     init() {
         // Check if we should prompt for auto-start on first launch
@@ -24,8 +32,8 @@ struct Clack_TrackerApp: App {
         // Using just the label (no systemImage) lets us show custom text
         MenuBarExtra {
             // This is what appears when you click the menu bar item
-            ContentView()
-                .environmentObject(monitor) // Pass monitor to ContentView
+            ContentView(checkForUpdates: { updaterController.checkForUpdates(nil) })
+                .environmentObject(monitor)
         } label: {
             // This appears in the menu bar
             // monitor.todayCount updates automatically when keys are pressed!

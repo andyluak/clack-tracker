@@ -11,6 +11,9 @@ struct ContentView: View {
     // Get the monitor instance passed from the app
     @EnvironmentObject var monitor: KeystrokeMonitor
 
+    // Closure to trigger update check
+    var checkForUpdates: () -> Void
+
     @Environment(\.colorScheme) var colorScheme
 
     private var textColor: Color {
@@ -128,21 +131,38 @@ struct ContentView: View {
 
             Divider()
 
-            // Quit button
-            Button(action: {
-                NSApplication.shared.terminate(nil)
-            }) {
-                HStack {
-                    Image(systemName: "power")
-                        .font(.system(size: 11))
-                    Text("Quit")
-                        .font(.system(size: 12, weight: .medium))
+            // Footer buttons
+            VStack(spacing: 0) {
+                Button(action: {
+                    checkForUpdates()
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 11))
+                        Text("Check for Updates...")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .buttonStyle(.plain)
+                .foregroundColor(.gray)
+
+                Button(action: {
+                    NSApplication.shared.terminate(nil)
+                }) {
+                    HStack {
+                        Image(systemName: "power")
+                            .font(.system(size: 11))
+                        Text("Quit")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.red)
             }
-            .buttonStyle(.plain)
-            .foregroundColor(.red)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
         }
@@ -217,6 +237,6 @@ struct StatRow: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(checkForUpdates: {})
         .environmentObject(KeystrokeMonitor())
 }
